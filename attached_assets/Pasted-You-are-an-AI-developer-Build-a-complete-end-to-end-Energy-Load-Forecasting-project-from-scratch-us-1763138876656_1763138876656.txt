@@ -1,0 +1,124 @@
+You are an AI developer. Build a complete end-to-end Energy Load Forecasting project from scratch using the dataset already present in the project folder. Follow every instruction exactly.
+
+1) Project goal
+Create an automated pipeline that:
+Estimates/fills missing meter readings,
+Predicts short-term electricity load for next 1 day (24 hours) and next 7 days (168 hours),
+Provides model comparison, metrics, visualization, and a web UI.
+
+2) Dataset (use only this file)
+Path:
+/data/time_series_60min_singleindex.csv
+Important:
+This is the ONLY dataset you must use.
+Your pipeline must internally standardize it to behave like energy_load.csv.
+Expected columns after preprocessing (the code must detect equivalents in the raw file):
+timestamp, load (required)
+Optional: temperature, humidity, solar_power, wind_power, is_holiday
+Rules:
+Do NOT download any external datasets.
+Use only /data/time_series_60min_singleindex.csv.
+If optional columns are missing, simulate or skip safely.
+Detect correct load column (e.g., *_load_actual*) and rename it to load.
+
+3) Deliverables (generate these files & folders)
+Create this folder structure and populate with runnable code and artifacts:
+project/
+ ├─ data/time_series_60min_singleindex.csv        # (already present)
+ ├─ data/energy_load.csv                          # create this cleaned file from preprocessing
+ ├─ notebooks/
+ ├─ src/
+ │  ├─ preprocess.py
+ │  ├─ features.py
+ │  ├─ impute.py
+ │  ├─ train_models.py
+ │  ├─ evaluate.py
+ │  └─ utils.py
+ ├─ api/
+ │  └─ app.py
+ ├─ frontend/
+ ├─ models/
+ ├─ requirements.txt
+ ├─ Dockerfile
+ └─ README.md
+
+4) Data preprocessing (src/preprocess.py)
+Load /data/time_series_60min_singleindex.csv
+Detect timestamp column — convert to timezone-aware datetime and set index
+Detect data frequency & resample to hourly
+Identify missing intervals
+Short-gap imputation: forward/backfill + linear interpolation
+Long-gap imputation: LSTM-based or KNN imputer (in src/impute.py)
+Feature engineering (in src/features.py):
+hour, day_of_week, month, is_weekend
+sin/cos cyclical encodings
+lag features: t-1, t-24, t-168
+rolling windows: 3h, 24h, 168h
+Add holiday flag if missing
+Save cleaned file as /data/energy_load.csv
+
+5) Models (in src/train_models.py)
+Implement:
+Naive baseline
+ARIMA/SARIMAX with exogenous features
+Prophet with regressors
+LSTM (Keras/TensorFlow)
+Hybrid Model: Prophet + LSTM on residuals
+Save all models to /models/ with metadata (timestamp, features used).
+
+6) Training & evaluation (src/evaluate.py)
+Time-aware split (no random splitting)
+Walk-forward / rolling window validation
+Compute: MAE, RMSE, MAPE
+Plot:
+training loss
+actual vs forecast (1-day & 7-day)
+residuals
+hourly error heatmap
+Save metrics as /models/metrics_{model}.json
+Save plots to /models/plots/
+
+7) API (FastAPI — api/app.py)
+Endpoints:
+POST /predict?days=1 or ?days=7
+POST /impute
+GET /models
+POST /retrain
+API loads model artifacts from /models/.
+
+8) Frontend (React + Tailwind — /frontend/)
+Pages:
+Upload CSV & preview
+Model selector (Naive / ARIMA / Prophet / LSTM / Hybrid)
+Horizon selector (1-day / 7-day)
+Train / Predict / Impute
+Interactive charts (Chart.js or Recharts)
+Metrics table
+Download forecast CSV
+Use Axios to call FastAPI.
+
+9) Requirements & run
+Python requirements:
+pandas, numpy, scikit-learn, tensorflow, keras, statsmodels, prophet, fastapi, uvicorn, joblib, matplotlib, plotly
+Frontend:
+react, tailwindcss, axios, chart.js
+Include Dockerfile for backend containerization.
+
+10) README.md
+Explain:
+complete project overview
+tech stack
+how to run backend
+how to run frontend
+how to train models
+how to call API
+
+12) Final output required
+All code in specified structure
+A notebooks/demo.ipynb that:
+loads /data/time_series_60min_singleindex.csv
+preprocesses → outputs /data/energy_load.csv
+trains the Hybrid model
+predicts 1-day & 7-day
+plots results and prints metrics
+Full local running instructions
