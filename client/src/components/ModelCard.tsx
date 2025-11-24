@@ -6,12 +6,19 @@ import { cn } from "@/lib/utils";
 import type { ModelType } from "@shared/schema";
 
 interface ModelCardProps {
+  /** The type of model (e.g., 'naive', 'arima') */
   type: ModelType;
+  /** Display title for the model */
   title: string;
+  /** Description of the model's methodology */
   description: string;
+  /** Complexity rating for visual indication */
   complexity: 'low' | 'medium' | 'high';
+  /** Whether this model is currently selected */
   isSelected: boolean;
+  /** Callback when this model is selected */
   onSelect: () => void;
+  /** Whether the card is disabled */
   isDisabled?: boolean;
 }
 
@@ -29,11 +36,15 @@ const complexityColors = {
   high: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
 };
 
+/**
+ * A card component representing a forecasting model.
+ * Displays model details, complexity, and selection state.
+ */
 export function ModelCard({ type, title, description, complexity, isSelected, onSelect, isDisabled }: ModelCardProps) {
   const Icon = modelIcons[type];
-  
+
   return (
-    <Card 
+    <Card
       className={cn(
         "hover-elevate active-elevate-2 transition-all duration-200 cursor-pointer",
         isSelected && "border-2 border-primary",
@@ -59,7 +70,7 @@ export function ModelCard({ type, title, description, complexity, isSelected, on
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        <Button 
+        <Button
           variant={isSelected ? "default" : "outline"}
           className="w-full"
           disabled={isDisabled}

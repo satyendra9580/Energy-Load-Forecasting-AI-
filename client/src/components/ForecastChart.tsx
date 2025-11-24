@@ -4,11 +4,19 @@ import type { ForecastPoint } from "@shared/schema";
 import { format, parseISO } from "date-fns";
 
 interface ForecastChartProps {
+  /** Array of forecast points containing actual and predicted values */
   data: ForecastPoint[];
+  /** Title of the chart */
   title: string;
+  /** ISO timestamp string of when the data was last updated */
   lastUpdated?: string;
 }
 
+/**
+ * A line chart component for visualizing forecast data.
+ * Displays actual load, predicted load, and confidence intervals (if available).
+ * Uses Recharts for rendering.
+ */
 export function ForecastChart({ data, title, lastUpdated }: ForecastChartProps) {
   const chartData = data.map(point => ({
     timestamp: format(parseISO(point.timestamp), 'MM/dd HH:mm'),
@@ -33,60 +41,60 @@ export function ForecastChart({ data, title, lastUpdated }: ForecastChartProps) 
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-              <XAxis 
-                dataKey="timestamp" 
+              <XAxis
+                dataKey="timestamp"
                 tick={{ fontSize: 12 }}
                 className="text-muted-foreground"
               />
-              <YAxis 
+              <YAxis
                 tick={{ fontSize: 12 }}
                 className="text-muted-foreground"
                 label={{ value: 'Load (MW)', angle: -90, position: 'insideLeft', style: { fontSize: 12 } }}
               />
-              <Tooltip 
-                contentStyle={{ 
+              <Tooltip
+                contentStyle={{
                   backgroundColor: 'hsl(var(--card))',
                   border: '1px solid hsl(var(--border))',
                   borderRadius: '6px',
                   fontSize: '12px'
                 }}
               />
-              <Legend 
+              <Legend
                 wrapperStyle={{ fontSize: '14px', paddingTop: '10px' }}
               />
               {chartData.some(d => d.actual !== undefined) && (
-                <Line 
-                  type="monotone" 
-                  dataKey="actual" 
-                  stroke="hsl(var(--chart-1))" 
+                <Line
+                  type="monotone"
+                  dataKey="actual"
+                  stroke="hsl(var(--chart-1))"
                   strokeWidth={2}
                   dot={false}
                   name="Actual Load"
                 />
               )}
-              <Line 
-                type="monotone" 
-                dataKey="predicted" 
-                stroke="hsl(var(--chart-2))" 
+              <Line
+                type="monotone"
+                dataKey="predicted"
+                stroke="hsl(var(--chart-2))"
                 strokeWidth={2}
                 dot={false}
                 name="Predicted Load"
               />
               {chartData.some(d => d.lowerBound !== undefined) && (
                 <>
-                  <Line 
-                    type="monotone" 
-                    dataKey="lowerBound" 
-                    stroke="hsl(var(--chart-3))" 
+                  <Line
+                    type="monotone"
+                    dataKey="lowerBound"
+                    stroke="hsl(var(--chart-3))"
                     strokeWidth={1}
                     strokeDasharray="5 5"
                     dot={false}
                     name="Lower Bound"
                   />
-                  <Line 
-                    type="monotone" 
-                    dataKey="upperBound" 
-                    stroke="hsl(var(--chart-3))" 
+                  <Line
+                    type="monotone"
+                    dataKey="upperBound"
+                    stroke="hsl(var(--chart-3))"
                     strokeWidth={1}
                     strokeDasharray="5 5"
                     dot={false}

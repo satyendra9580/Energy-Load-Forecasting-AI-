@@ -4,10 +4,17 @@ import type { ModelResult } from "@shared/schema";
 import { format, parseISO } from "date-fns";
 
 interface ModelComparisonChartProps {
+    /** Array of model results to compare */
     results: ModelResult[];
+    /** Title of the chart */
     title: string;
 }
 
+/**
+ * A chart component that visualizes forecasts from multiple models.
+ * Displays the actual load (if available) and predicted loads for each model.
+ * Uses Recharts for rendering.
+ */
 const COLORS = [
     'hsl(var(--chart-1))',
     'hsl(var(--chart-2))',

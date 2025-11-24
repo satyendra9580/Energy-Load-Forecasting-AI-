@@ -1,6 +1,10 @@
 import type { TimeSeriesDataPoint, DatasetInfo } from "@shared/schema";
 import Papa from "papaparse";
 
+/**
+ * Parses raw CSV content into structured data.
+ * Uses PapaParse for robust CSV handling.
+ */
 export function parseCSV(csvContent: string): { data: any[], columns: string[] } {
   const result = Papa.parse(csvContent, {
     header: true,
@@ -14,29 +18,33 @@ export function parseCSV(csvContent: string): { data: any[], columns: string[] }
   };
 }
 
+/**
+ * Detects relevant columns (timestamp, load, weather) from the CSV headers.
+ * Uses keyword matching to find the best candidates.
+ */
 export function detectColumns(columns: string[]): {
   timestampCol: string | null;
   loadCol: string | null;
   temperatureCol: string | null;
   humidityCol: string | null;
 } {
-  const timestampCol = columns.find(col => 
-    col.toLowerCase().includes('timestamp') || 
+  const timestampCol = columns.find(col =>
+    col.toLowerCase().includes('timestamp') ||
     col.toLowerCase().includes('time') ||
     col.toLowerCase().includes('date')
   ) || null;
 
-  const loadCol = columns.find(col => 
-    col.toLowerCase().includes('load') || 
+  const loadCol = columns.find(col =>
+    col.toLowerCase().includes('load') ||
     col.toLowerCase().includes('power') ||
     col.toLowerCase().includes('demand')
   ) || null;
 
-  const temperatureCol = columns.find(col => 
+  const temperatureCol = columns.find(col =>
     col.toLowerCase().includes('temp')
   ) || null;
 
-  const humidityCol = columns.find(col => 
+  const humidityCol = columns.find(col =>
     col.toLowerCase().includes('humidity') ||
     col.toLowerCase().includes('humid')
   ) || null;
@@ -44,6 +52,10 @@ export function detectColumns(columns: string[]): {
   return { timestampCol, loadCol, temperatureCol, humidityCol };
 }
 
+/**
+ * Standardizes raw data into a consistent TimeSeriesDataPoint format.
+ * Filters out invalid rows and sorts by timestamp.
+ */
 export function standardizeData(
   rawData: any[],
   columns: { timestampCol: string | null; loadCol: string | null; temperatureCol: string | null; humidityCol: string | null }
@@ -52,7 +64,7 @@ export function standardizeData(
 
   for (const row of rawData) {
     if (!columns.timestampCol || !columns.loadCol) continue;
-    
+
     const timestamp = row[columns.timestampCol];
     const load = row[columns.loadCol];
 
@@ -74,11 +86,15 @@ export function standardizeData(
     standardized.push(dataPoint);
   }
 
-  return standardized.sort((a, b) => 
+  return standardized.sort((a, b) =>
     new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
   );
 }
 
+/**
+ * Fills missing load values using linear interpolation.
+ * Ensures continuity in the time series data.
+ */
 export function fillMissingValues(data: TimeSeriesDataPoint[]): TimeSeriesDataPoint[] {
   if (data.length === 0) return data;
 
@@ -116,13 +132,17 @@ export function fillMissingValues(data: TimeSeriesDataPoint[]): TimeSeriesDataPo
   return filled;
 }
 
+/**
+ * Analyzes the dataset to generate summary statistics and metadata.
+ * Determines frequency, date range, and data quality metrics.
+ */
 export function getDatasetInfo(data: TimeSeriesDataPoint[], filename: string): DatasetInfo {
   const timestamps = data.map(d => new Date(d.timestamp).getTime());
   const diffs = [];
   for (let i = 1; i < timestamps.length; i++) {
     diffs.push(timestamps[i] - timestamps[i - 1]);
   }
-  
+
   const avgDiff = diffs.reduce((a, b) => a + b, 0) / diffs.length;
   const frequency = avgDiff < 120000 ? '1min' : avgDiff < 3600000 ? '1hour' : 'daily';
 
@@ -132,7 +152,7 @@ export function getDatasetInfo(data: TimeSeriesDataPoint[], filename: string): D
   if (data.some(d => d.solar_power !== undefined)) columns.push('solar_power');
   if (data.some(d => d.wind_power !== undefined)) columns.push('wind_power');
 
-  const missingValues = data.filter(d => 
+  const missingValues = data.filter(d =>
     d.load === null || d.load === undefined || isNaN(d.load)
   ).length;
 

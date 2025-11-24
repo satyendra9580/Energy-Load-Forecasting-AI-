@@ -7,6 +7,11 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+/**
+ * Performs an API request with standard error handling.
+ * Automatically adds Content-Type header for JSON data.
+ * Throws an error if the response is not OK.
+ */
 export async function apiRequest(
   method: string,
   url: string,
@@ -28,19 +33,23 @@ export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
-  async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
-    });
+    async ({ queryKey }) => {
+      const res = await fetch(queryKey.join("/") as string, {
+        credentials: "include",
+      });
 
-    if (unauthorizedBehavior === "returnNull" && res.status === 401) {
-      return null;
-    }
+      if (unauthorizedBehavior === "returnNull" && res.status === 401) {
+        return null;
+      }
 
-    await throwIfResNotOk(res);
-    return await res.json();
-  };
+      await throwIfResNotOk(res);
+      return await res.json();
+    };
 
+/**
+ * Global QueryClient instance for React Query.
+ * Configured with default options for error handling and caching.
+ */
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {

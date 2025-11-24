@@ -1,6 +1,11 @@
 import type { ProcessedDataPoint, ForecastPoint, ModelType, EvaluationMetrics } from "@shared/schema";
 import { calculateMetrics } from "./metrics";
 
+/**
+ * Naive forecasting model.
+ * Predicts the last observed value for all future time steps.
+ * Used as a baseline for performance comparison.
+ */
 export function naiveForecast(
   data: ProcessedDataPoint[],
   horizon: number
@@ -33,6 +38,11 @@ export function naiveForecast(
   return { forecast: forecastPoints, metrics };
 }
 
+/**
+ * ARIMA-like statistical model.
+ * Uses trend and seasonality components to generate forecasts.
+ * Good for capturing linear patterns and weekly seasonality.
+ */
 export function arimaLikeForecast(
   data: ProcessedDataPoint[],
   horizon: number
@@ -50,7 +60,7 @@ export function arimaLikeForecast(
 
   for (let i = 0; i < predictCount; i++) {
     let prediction = 0;
-    
+
     if (i === 0) {
       const recent = trainData.slice(-24);
       const trend = (recent[recent.length - 1].load - recent[0].load) / recent.length;
@@ -59,8 +69,8 @@ export function arimaLikeForecast(
     } else {
       const prevPredicted = predicted[i - 1];
       const sameDayOfWeekData = trainData.filter((_, idx) => idx % 168 === (trainSize + i) % 168);
-      const seasonal = sameDayOfWeekData.length > 0 
-        ? sameDayOfWeekData.reduce((sum, p) => sum + p.load, 0) / sameDayOfWeekData.length 
+      const seasonal = sameDayOfWeekData.length > 0
+        ? sameDayOfWeekData.reduce((sum, p) => sum + p.load, 0) / sameDayOfWeekData.length
         : prevPredicted;
       prediction = prevPredicted * 0.7 + seasonal * 0.3;
     }
@@ -81,6 +91,11 @@ export function arimaLikeForecast(
   return { forecast: forecastPoints, metrics };
 }
 
+/**
+ * Prophet-like decomposition model.
+ * Decomposes time series into trend, seasonality (hourly), and holiday effects.
+ * Robust to missing data and outliers.
+ */
 export function prophetLikeForecast(
   data: ProcessedDataPoint[],
   horizon: number
@@ -95,7 +110,7 @@ export function prophetLikeForecast(
 
   const hourlyPatterns = new Array(24).fill(0);
   const hourlyCounts = new Array(24).fill(0);
-  
+
   trainData.forEach(point => {
     if (point.hour !== undefined) {
       hourlyPatterns[point.hour] += point.load;
@@ -116,11 +131,11 @@ export function prophetLikeForecast(
   for (let i = 0; i < predictCount; i++) {
     const point = testData[i];
     const hour = point.hour ?? 0;
-    
+
     const trendComponent = trend * (trainSize + i);
     const seasonalComponent = hourlyPatterns[hour] - overallMean;
     const weekendAdjustment = point.is_weekend ? -overallMean * 0.05 : 0;
-    
+
     const prediction = overallMean + trendComponent + seasonalComponent + weekendAdjustment;
 
     forecastPoints.push({
@@ -138,6 +153,11 @@ export function prophetLikeForecast(
   return { forecast: forecastPoints, metrics };
 }
 
+/**
+ * LSTM-like neural network simulation.
+ * Uses a weighted sliding window approach to simulate sequence learning.
+ * Captures non-linear dependencies and lag features.
+ */
 export function lstmLikeForecast(
   data: ProcessedDataPoint[],
   horizon: number
@@ -156,10 +176,10 @@ export function lstmLikeForecast(
 
   for (let i = 0; i < predictCount; i++) {
     let prediction = 0;
-    
+
     const sequenceStart = Math.max(0, trainSize - sequenceLength + i);
-    const sequence = i === 0 
-      ? trainData.slice(sequenceStart) 
+    const sequence = i === 0
+      ? trainData.slice(sequenceStart)
       : [...trainData.slice(sequenceStart), ...testData.slice(0, i)].slice(-sequenceLength);
 
     if (sequence.length > 0) {
@@ -193,6 +213,11 @@ export function lstmLikeForecast(
   return { forecast: forecastPoints, metrics };
 }
 
+/**
+ * Hybrid ensemble model.
+ * Combines predictions from Prophet and LSTM models using a weighted average.
+ * Aims to leverage the strengths of both statistical and deep learning approaches.
+ */
 export function hybridForecast(
   data: ProcessedDataPoint[],
   horizon: number
@@ -224,6 +249,10 @@ export function hybridForecast(
   return { forecast: forecastPoints, metrics };
 }
 
+/**
+ * Main forecasting entry point.
+ * Dispatches the prediction request to the specified model implementation.
+ */
 export function forecast(
   data: ProcessedDataPoint[],
   modelType: ModelType,

@@ -18,6 +18,10 @@ export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
 // Time series data point
+/**
+ * Represents a single raw data point from the uploaded CSV.
+ * Contains the timestamp and load value, plus optional weather/holiday data.
+ */
 export interface TimeSeriesDataPoint {
   timestamp: string;
   load: number;
@@ -29,6 +33,10 @@ export interface TimeSeriesDataPoint {
 }
 
 // Processed time series with features
+/**
+ * Represents a data point after preprocessing and feature engineering.
+ * Includes derived features like hour, day of week, lags, and rolling averages.
+ */
 export interface ProcessedDataPoint extends TimeSeriesDataPoint {
   hour?: number;
   day_of_week?: number;
@@ -49,6 +57,10 @@ export interface ProcessedDataPoint extends TimeSeriesDataPoint {
 }
 
 // Forecast data point
+/**
+ * Represents a single predicted data point.
+ * Includes the predicted load and optional confidence intervals.
+ */
 export interface ForecastPoint {
   timestamp: string;
   predicted_load: number;
@@ -61,6 +73,9 @@ export interface ForecastPoint {
 export type ModelType = 'naive' | 'arima' | 'prophet' | 'lstm' | 'hybrid';
 
 // Model configuration
+/**
+ * Configuration for a model training/prediction run.
+ */
 export interface ModelConfig {
   type: ModelType;
   horizon: 1 | 7; // days
@@ -68,6 +83,9 @@ export interface ModelConfig {
 }
 
 // Model metadata
+/**
+ * Metadata about a trained model and its execution.
+ */
 export interface ModelMetadata {
   id: string;
   type: ModelType;
@@ -79,6 +97,9 @@ export interface ModelMetadata {
 }
 
 // Evaluation metrics
+/**
+ * Performance metrics for model evaluation.
+ */
 export interface EvaluationMetrics {
   mae: number;
   rmse: number;
@@ -87,6 +108,10 @@ export interface EvaluationMetrics {
 }
 
 // Model result
+/**
+ * Complete result of a model prediction run.
+ * Includes metadata, metrics, and the forecast data itself.
+ */
 export interface ModelResult {
   metadata: ModelMetadata;
   metrics: EvaluationMetrics;

@@ -9,6 +9,11 @@ const navItems = [
   { path: "/models", label: "Models", icon: Cpu },
 ];
 
+/**
+ * Main navigation header component.
+ * Provides links to Dashboard, Upload, and Models pages.
+ * Highlights the active route.
+ */
 export function Navigation() {
   const [location] = useLocation();
 
@@ -29,7 +34,7 @@ export function Navigation() {
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = location === item.path;
-            
+
             return (
               <Link key={item.path} href={item.path}>
                 <Button
@@ -55,16 +60,16 @@ export function Navigation() {
 
 function Zap({ className }: { className?: string }) {
   return (
-    <svg 
+    <svg
       className={className}
-      xmlns="http://www.w3.org/2000/svg" 
-      width="24" 
-      height="24" 
-      viewBox="0 0 24 24" 
-      fill="none" 
-      stroke="currentColor" 
-      strokeWidth="2" 
-      strokeLinecap="round" 
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
       strokeLinejoin="round"
     >
       <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />

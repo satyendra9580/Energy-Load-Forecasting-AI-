@@ -3,13 +3,22 @@ import { Button } from "@/components/ui/button";
 import { LucideIcon } from "lucide-react";
 
 interface EmptyStateProps {
+  /** Icon to display */
   icon: LucideIcon;
+  /** Main title text */
   title: string;
+  /** Description text */
   description: string;
+  /** Label for the action button (optional) */
   actionLabel?: string;
+  /** Callback for the action button (optional) */
   onAction?: () => void;
 }
 
+/**
+ * A placeholder component displayed when there is no data or content.
+ * Can include an optional action button.
+ */
 export function EmptyState({ icon: Icon, title, description, actionLabel, onAction }: EmptyStateProps) {
   return (
     <Card className="border-dashed">

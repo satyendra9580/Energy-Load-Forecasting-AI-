@@ -1,5 +1,9 @@
 import type { EvaluationMetrics } from "@shared/schema";
 
+/**
+ * Calculates evaluation metrics for model performance.
+ * Computes MAE (Mean Absolute Error), RMSE (Root Mean Square Error), and MAPE (Mean Absolute Percentage Error).
+ */
 export function calculateMetrics(actual: number[], predicted: number[]): EvaluationMetrics {
   if (actual.length !== predicted.length || actual.length === 0) {
     return { mae: 0, rmse: 0, mape: 0 };
@@ -13,10 +17,10 @@ export function calculateMetrics(actual: number[], predicted: number[]): Evaluat
   for (let i = 0; i < actual.length; i++) {
     const absError = Math.abs(actual[i] - predicted[i]);
     const squaredError = Math.pow(actual[i] - predicted[i], 2);
-    
+
     sumAbsError += absError;
     sumSquaredError += squaredError;
-    
+
     if (actual[i] !== 0) {
       sumPercentError += Math.abs((actual[i] - predicted[i]) / actual[i]) * 100;
       validCount++;

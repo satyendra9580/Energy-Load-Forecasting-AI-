@@ -5,11 +5,19 @@ import { Upload, FileText, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface UploadZoneProps {
+  /** Callback function when a file is selected or dropped */
   onFileSelect: (file: File) => void;
+  /** Accepted file types (default: ".csv") */
   accept?: string;
+  /** Whether the upload zone is disabled */
   disabled?: boolean;
 }
 
+/**
+ * A drag-and-drop file upload component.
+ * Supports drag-and-drop and click-to-browse.
+ * Validates file extension (CSV only).
+ */
 export function UploadZone({ onFileSelect, accept = ".csv", disabled }: UploadZoneProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,7 +57,7 @@ export function UploadZone({ onFileSelect, accept = ".csv", disabled }: UploadZo
   const handleFileInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setError(null);
     const file = e.target.files?.[0];
-    
+
     if (!file) return;
 
     if (!file.name.endsWith('.csv')) {
@@ -78,7 +86,7 @@ export function UploadZone({ onFileSelect, accept = ".csv", disabled }: UploadZo
           <div className="rounded-full bg-primary/10 p-6">
             <Upload className="h-10 w-10 text-primary" />
           </div>
-          
+
           <div className="space-y-2">
             <h3 className="text-lg font-semibold">
               Upload Time Series Data

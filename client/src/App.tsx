@@ -9,6 +9,10 @@ import Upload from "@/pages/Upload";
 import Models from "@/pages/Models";
 import NotFound from "@/pages/not-found";
 
+/**
+ * Client-side router configuration.
+ * Maps URL paths to page components.
+ */
 function Router() {
   return (
     <Switch>
@@ -20,6 +24,10 @@ function Router() {
   );
 }
 
+/**
+ * Root application component.
+ * Sets up global providers (QueryClient, Toaster, Tooltip) and the router.
+ */
 function App() {
   return (
     <QueryClientProvider client={queryClient}>

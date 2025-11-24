@@ -56,10 +56,12 @@ export default function Models() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
+  // Check if dataset is available
   const { data: hasData } = useQuery({
     queryKey: ['/api/dataset/info'],
   });
 
+  // Mutation for training a single model
   const predictMutation = useMutation({
     mutationFn: async (request: PredictRequest) => {
       setTrainingProgress(0);
@@ -109,6 +111,7 @@ export default function Models() {
     },
   });
 
+  // Mutation for comparing all models
   const compareMutation = useMutation({
     mutationFn: async (horizon: 1 | 7) => {
       const response = await apiRequest(

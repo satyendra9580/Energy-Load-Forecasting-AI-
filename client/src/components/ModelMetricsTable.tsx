@@ -10,9 +10,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import type { ModelResult } from "@shared/schema";
 
 interface ModelMetricsTableProps {
+    /** Array of model results containing metrics to display */
     results: ModelResult[];
 }
 
+/**
+ * A table component that displays performance metrics for multiple models.
+ * Shows MAE, RMSE, MAPE, and training time.
+ */
 export function ModelMetricsTable({ results }: ModelMetricsTableProps) {
     if (!results.length) return null;
 

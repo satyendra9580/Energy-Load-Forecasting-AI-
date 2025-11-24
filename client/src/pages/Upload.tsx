@@ -11,6 +11,10 @@ import { apiRequest } from "@/lib/queryClient";
 import type { UploadResponse } from "@shared/schema";
 import Papa from "papaparse";
 
+/**
+ * Page component for uploading and processing CSV data.
+ * Handles file selection, upload to server, and displays data preview.
+ */
 export default function Upload() {
   const [uploadedData, setUploadedData] = useState<UploadResponse | null>(null);
   const { toast } = useToast();
@@ -20,7 +24,7 @@ export default function Upload() {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append('file', file);
-      
+
       const response = await fetch('/api/upload', {
         method: 'POST',
         body: formData,
@@ -100,7 +104,7 @@ export default function Upload() {
                 {uploadedData.datasetInfo.filename} • {uploadedData.datasetInfo.rowCount.toLocaleString()} rows • {uploadedData.datasetInfo.frequency}
               </p>
             </div>
-            <Button 
+            <Button
               onClick={() => {
                 setUploadedData(null);
                 uploadMutation.reset();
@@ -113,8 +117,8 @@ export default function Upload() {
             </Button>
           </div>
 
-          <DataPreviewTable 
-            data={uploadedData.preview} 
+          <DataPreviewTable
+            data={uploadedData.preview}
             datasetInfo={uploadedData.datasetInfo}
           />
 
@@ -125,7 +129,7 @@ export default function Upload() {
                 Your data has been validated and preprocessed. You can now proceed to model training.
               </p>
             </div>
-            <Button 
+            <Button
               onClick={handleProcessData}
               size="lg"
               className="gap-2"

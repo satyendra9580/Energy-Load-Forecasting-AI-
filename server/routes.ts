@@ -11,12 +11,17 @@ import { randomUUID } from "crypto";
 const upload = multer({ storage: multer.memoryStorage() });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  /**
+   * Uploads and processes a CSV dataset.
+   * Expects a multipart/form-data request with a 'file' field.
+   * Validates the CSV structure and stores processed data.
+   */
   app.post('/api/upload', upload.single('file'), async (req, res) => {
     try {
       if (!req.file) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'No file uploaded' 
+        return res.status(400).json({
+          success: false,
+          error: 'No file uploaded'
         } as UploadResponse);
       }
 
@@ -24,27 +29,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { data: rawData, columns } = parseCSV(csvContent);
 
       if (rawData.length === 0) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'CSV file is empty' 
+        return res.status(400).json({
+          success: false,
+          error: 'CSV file is empty'
         } as UploadResponse);
       }
 
       const detectedColumns = detectColumns(columns);
-      
+
       if (!detectedColumns.timestampCol || !detectedColumns.loadCol) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Could not detect required timestamp and load columns' 
+        return res.status(400).json({
+          success: false,
+          error: 'Could not detect required timestamp and load columns'
         } as UploadResponse);
       }
 
       const standardizedData = standardizeData(rawData, detectedColumns);
-      
+
       if (standardizedData.length === 0) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'No valid data points found after preprocessing' 
+        return res.status(400).json({
+          success: false,
+          error: 'No valid data points found after preprocessing'
         } as UploadResponse);
       }
 
@@ -63,17 +68,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } as UploadResponse);
     } catch (error) {
       console.error('Upload error:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Upload failed' 
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Upload failed'
       } as UploadResponse);
     }
   });
 
+  /**
+   * Retrieves information about the currently uploaded dataset.
+   * Returns metadata like row count, date range, and columns.
+   */
   app.get('/api/dataset/info', async (req, res) => {
     try {
       const data = await storage.getTimeSeriesData();
-      
+
       if (data.length === 0) {
         return res.status(404).json({ error: 'No dataset available' });
       }
@@ -86,23 +95,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  /**
+   * Generates a forecast using a specific model.
+   * Requires 'modelType' and 'horizon' in the request body.
+   * Returns the forecast results and performance metrics.
+   */
   app.post('/api/predict', async (req, res) => {
     try {
       const { modelType, horizon } = req.body as PredictRequest;
 
       if (!modelType || !horizon) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Model type and horizon are required' 
+        return res.status(400).json({
+          success: false,
+          error: 'Model type and horizon are required'
         } as PredictResponse);
       }
 
       const processedData = await storage.getProcessedData();
-      
+
       if (processedData.length === 0) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'No data available. Please upload data first.' 
+        return res.status(400).json({
+          success: false,
+          error: 'No data available. Please upload data first.'
         } as PredictResponse);
       }
 
@@ -132,30 +146,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } as PredictResponse);
     } catch (error) {
       console.error('Prediction error:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Prediction failed' 
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Prediction failed'
       } as PredictResponse);
     }
   });
 
+  /**
+   * Generates forecasts for ALL available models for a given horizon.
+   * Used for the model comparison feature.
+   * Returns an array of results for each model.
+   */
   app.post('/api/predict/all', async (req, res) => {
     try {
       const { horizon } = req.body as { horizon: 1 | 7 };
 
       if (!horizon) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'Horizon is required' 
+        return res.status(400).json({
+          success: false,
+          error: 'Horizon is required'
         });
       }
 
       const processedData = await storage.getProcessedData();
-      
+
       if (processedData.length === 0) {
-        return res.status(400).json({ 
-          success: false, 
-          error: 'No data available. Please upload data first.' 
+        return res.status(400).json({
+          success: false,
+          error: 'No data available. Please upload data first.'
         });
       }
 
@@ -180,11 +199,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           metrics,
           forecast: forecastPoints,
         };
-        
+
         // We don't necessarily need to store every single one in the DB for this comparison view, 
         // but we could if we wanted to persist them. For now, let's just return them.
         // await storage.storeModelResult(result); 
-        
+
         results.push(result);
       }
 
@@ -194,17 +213,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       console.error('Prediction all error:', error);
-      res.status(500).json({ 
-        success: false, 
-        error: error instanceof Error ? error.message : 'Prediction failed' 
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Prediction failed'
       });
     }
   });
 
+  /**
+   * Retrieves the most recently generated forecast result.
+   * Used to display the latest data on the dashboard.
+   */
   app.get('/api/forecast/latest', async (req, res) => {
     try {
       const result = await storage.getLatestModelResult();
-      
+
       if (!result) {
         return res.status(404).json({ error: 'No forecast available' });
       }

@@ -1,12 +1,17 @@
 import type { TimeSeriesDataPoint, ProcessedDataPoint } from "@shared/schema";
 
+/**
+ * Generates features for machine learning models.
+ * Adds time-based features (hour, day, month), cyclical encodings (sin/cos),
+ * lag features, and rolling averages.
+ */
 export function engineerFeatures(data: TimeSeriesDataPoint[]): ProcessedDataPoint[] {
   const processed: ProcessedDataPoint[] = [];
 
   for (let i = 0; i < data.length; i++) {
     const point = data[i];
     const date = new Date(point.timestamp);
-    
+
     const hour = date.getHours();
     const dayOfWeek = date.getDay();
     const month = date.getMonth();

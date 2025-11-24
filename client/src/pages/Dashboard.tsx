@@ -12,12 +12,15 @@ import type { ModelResult } from "@shared/schema";
 import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
+  // State for the forecast horizon (1 or 7 days)
   const [horizon, setHorizon] = useState<1 | 7>(1);
 
+  // Fetch the latest single model forecast result
   const { data: latestResult, isLoading: isLatestLoading } = useQuery<ModelResult>({
     queryKey: ['/api/forecast/latest'],
   });
 
+  // Fetch comparison data for all models based on the selected horizon
   const { data: comparisonData, isLoading: isComparisonLoading } = useQuery<{ success: boolean; results: ModelResult[] }>({
     queryKey: ['/api/predict/all', { horizon }],
     queryFn: async () => {

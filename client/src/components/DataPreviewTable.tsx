@@ -5,13 +5,19 @@ import type { TimeSeriesDataPoint, DatasetInfo } from "@shared/schema";
 import { format, parseISO } from "date-fns";
 
 interface DataPreviewTableProps {
+  /** Array of time series data points to preview */
   data: TimeSeriesDataPoint[];
+  /** Metadata about the dataset */
   datasetInfo: DatasetInfo;
 }
 
+/**
+ * A table component for previewing uploaded dataset content.
+ * Shows the first 100 rows and summary statistics.
+ */
 export function DataPreviewTable({ data, datasetInfo }: DataPreviewTableProps) {
   const previewData = data.slice(0, 100);
-  
+
   return (
     <Card className="w-full" data-testid="card-data-preview">
       <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap space-y-0 pb-4">
@@ -66,8 +72,8 @@ export function DataPreviewTable({ data, datasetInfo }: DataPreviewTableProps) {
               </thead>
               <tbody>
                 {previewData.map((row, idx) => (
-                  <tr 
-                    key={idx} 
+                  <tr
+                    key={idx}
                     className="border-b last:border-0 hover-elevate transition-colors"
                     data-testid={`row-data-${idx}`}
                   >

@@ -2,9 +2,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 interface MetricsCardProps {
+  /** Label for the metric */
   label: string;
+  /** Value to display */
   value: number | string;
+  /** Unit of measurement (e.g., "MW", "%") */
   unit?: string;
+  /** Optional trend indicator */
   trend?: {
     value: number;
     direction: 'up' | 'down';
@@ -12,6 +16,10 @@ interface MetricsCardProps {
   className?: string;
 }
 
+/**
+ * A card component for displaying a single metric with optional trend.
+ * Used for dashboard KPIs.
+ */
 export function MetricsCard({ label, value, unit, trend, className }: MetricsCardProps) {
   return (
     <Card className={cn("hover-elevate transition-all duration-200", className)} data-testid={`card-metric-${label.toLowerCase().replace(/\s+/g, '-')}`}>

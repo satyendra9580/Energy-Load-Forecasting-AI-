@@ -1,20 +1,39 @@
 import { type User, type InsertUser, type TimeSeriesDataPoint, type ProcessedDataPoint, type ModelResult } from "@shared/schema";
 import { randomUUID } from "crypto";
 
+/**
+ * Interface defining the storage operations.
+ * Allows for swapping different storage implementations (e.g., memory, database).
+ */
 export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
+  /** Stores raw time series data from CSV upload */
   storeTimeSeriesData(data: TimeSeriesDataPoint[]): Promise<void>;
+  /** Retrieves stored raw time series data */
   getTimeSeriesData(): Promise<TimeSeriesDataPoint[]>;
+
+  /** Stores processed data with engineered features */
   storeProcessedData(data: ProcessedDataPoint[]): Promise<void>;
+  /** Retrieves processed data for training/forecasting */
   getProcessedData(): Promise<ProcessedDataPoint[]>;
+
+  /** Stores the result of a model training/prediction run */
   storeModelResult(result: ModelResult): Promise<void>;
+  /** Retrieves the most recent model result */
   getLatestModelResult(): Promise<ModelResult | undefined>;
+
+  /** Clears all stored data (useful for testing or resetting) */
   clearData(): Promise<void>;
 }
 
+/**
+ * In-memory implementation of the storage interface.
+ * Data is lost when the server restarts.
+ * Suitable for demonstration and development purposes.
+ */
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private timeSeriesData: TimeSeriesDataPoint[] = [];
