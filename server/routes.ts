@@ -139,6 +139,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/predict/all', async (req, res) => {
+    try {
+      const { horizon } = req.body as { horizon: 1 | 7 };
+
+      if (!horizon) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'Horizon is required' 
+        });
+      }
+
+      const processedData = await storage.getProcessedData();
+      
+      if (processedData.length === 0) {
+        return res.status(400).json({ 
+          success: false, 
+          error: 'No data available. Please upload data first.' 
+        });
+      }
+
+      const modelTypes: ('naive' | 'arima' | 'prophet' | 'lstm' | 'hybrid')[] = ['naive', 'arima', 'prophet', 'lstm', 'hybrid'];
+      const results = [];
+
+      for (const modelType of modelTypes) {
+        const startTime = Date.now();
+        const { forecast: forecastPoints, metrics } = forecast(processedData, modelType, horizon);
+        const endTime = Date.now();
+
+        const result: ModelResult = {
+          metadata: {
+            id: randomUUID(),
+            type: modelType,
+            horizon,
+            trainedAt: new Date().toISOString(),
+            trainingDuration: endTime - startTime,
+            dataPoints: processedData.length,
+            features: ['hour', 'day_of_week', 'month', 'lag_1', 'lag_24', 'lag_168', 'rolling_24h'],
+          },
+          metrics,
+          forecast: forecastPoints,
+        };
+        
+        // We don't necessarily need to store every single one in the DB for this comparison view, 
+        // but we could if we wanted to persist them. For now, let's just return them.
+        // await storage.storeModelResult(result); 
+        
+        results.push(result);
+      }
+
+      res.json({
+        success: true,
+        results,
+      });
+    } catch (error) {
+      console.error('Prediction all error:', error);
+      res.status(500).json({ 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Prediction failed' 
+      });
+    }
+  });
+
   app.get('/api/forecast/latest', async (req, res) => {
     try {
       const result = await storage.getLatestModelResult();

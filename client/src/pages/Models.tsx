@@ -3,6 +3,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ModelCard } from "@/components/ModelCard";
 import { HorizonSelector } from "@/components/HorizonSelector";
 import { ForecastChart } from "@/components/ForecastChart";
+import { ModelComparisonChart } from "@/components/ModelComparisonChart";
+import { ModelMetricsTable } from "@/components/ModelMetricsTable";
 import { MetricsCard } from "@/components/MetricsCard";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingSpinner, ModelCardsLoadingSkeleton, ChartLoadingSkeleton } from "@/components/LoadingState";
@@ -10,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
-import { Zap, Download, AlertCircle } from "lucide-react";
+import { Zap, Download, AlertCircle, BarChart2 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { ModelType, PredictRequest, PredictResponse, ModelResult } from "@shared/schema";
 
@@ -107,6 +109,32 @@ export default function Models() {
     },
   });
 
+  const compareMutation = useMutation({
+    mutationFn: async (horizon: 1 | 7) => {
+      const response = await apiRequest(
+        'POST',
+        '/api/predict/all',
+        { horizon }
+      );
+      return await response.json() as { success: boolean; results: ModelResult[] };
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        toast({
+          title: "Comparison Generated",
+          description: `Generated forecasts for all models (${horizon} day horizon)`,
+        });
+      }
+    },
+    onError: (error) => {
+      toast({
+        title: "Comparison Failed",
+        description: error instanceof Error ? error.message : "An error occurred",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleTrain = () => {
     if (!hasData) {
       toast({
@@ -118,6 +146,19 @@ export default function Models() {
     }
 
     predictMutation.mutate({ modelType: selectedModel, horizon });
+  };
+
+  const handleCompare = () => {
+    if (!hasData) {
+      toast({
+        title: "No Data Available",
+        description: "Please upload data before comparing models",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    compareMutation.mutate(horizon);
   };
 
   const handleDownloadForecast = () => {
@@ -158,7 +199,7 @@ export default function Models() {
             Select and train forecasting models
           </p>
         </div>
-        
+
         <EmptyState
           icon={AlertCircle}
           title="No Data Uploaded"
@@ -186,8 +227,8 @@ export default function Models() {
         <CardContent className="space-y-6">
           <div className="space-y-3">
             <label className="text-sm font-medium">Forecast Horizon</label>
-            <HorizonSelector 
-              value={horizon} 
+            <HorizonSelector
+              value={horizon}
               onChange={setHorizon}
               disabled={predictMutation.isPending}
             />
@@ -209,7 +250,7 @@ export default function Models() {
           </div>
 
           <div className="flex items-center gap-4 pt-4">
-            <Button 
+            <Button
               onClick={handleTrain}
               disabled={predictMutation.isPending}
               size="lg"
@@ -220,7 +261,7 @@ export default function Models() {
               {predictMutation.isPending ? 'Training...' : 'Train & Predict'}
             </Button>
             {predictMutation.data?.result && (
-              <Button 
+              <Button
                 onClick={handleDownloadForecast}
                 variant="outline"
                 size="lg"
@@ -231,6 +272,16 @@ export default function Models() {
                 Download Forecast
               </Button>
             )}
+            <Button
+              onClick={handleCompare}
+              variant="secondary"
+              size="lg"
+              className="gap-2"
+              disabled={compareMutation.isPending || predictMutation.isPending}
+            >
+              <BarChart2 className="h-4 w-4" />
+              {compareMutation.isPending ? 'Comparing...' : 'Compare All Models'}
+            </Button>
           </div>
 
           {predictMutation.isPending && (
@@ -279,6 +330,18 @@ export default function Models() {
             title={`${selectedModel.toUpperCase()} Forecast - ${horizon} Day${horizon > 1 ? 's' : ''}`}
             lastUpdated={predictMutation.data.result.metadata.trainedAt}
           />
+        </div>
+      )}
+
+      {compareMutation.data?.results && !compareMutation.isPending && (
+        <div className="space-y-6">
+          <h2 className="text-2xl font-bold">Model Comparison</h2>
+          <ModelComparisonChart
+            results={compareMutation.data.results}
+            title={`All Models Comparison - ${horizon} Day${horizon > 1 ? 's' : ''}`}
+          />
+
+          <ModelMetricsTable results={compareMutation.data.results} />
         </div>
       )}
     </div>

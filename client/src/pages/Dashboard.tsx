@@ -1,15 +1,34 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { MetricsCard } from "@/components/MetricsCard";
 import { ForecastChart } from "@/components/ForecastChart";
+import { ModelComparisonChart } from "@/components/ModelComparisonChart";
+import { ModelMetricsTable } from "@/components/ModelMetricsTable";
+import { HorizonSelector } from "@/components/HorizonSelector";
 import { EmptyState } from "@/components/EmptyState";
 import { MetricsLoadingSkeleton, ChartLoadingSkeleton } from "@/components/LoadingState";
 import { BarChart3, TrendingUp, AlertCircle } from "lucide-react";
 import type { ModelResult } from "@shared/schema";
+import { apiRequest } from "@/lib/queryClient";
 
 export default function Dashboard() {
-  const { data: latestResult, isLoading, error } = useQuery<ModelResult>({
+  const [horizon, setHorizon] = useState<1 | 7>(1);
+
+  const { data: latestResult, isLoading: isLatestLoading } = useQuery<ModelResult>({
     queryKey: ['/api/forecast/latest'],
   });
+
+  const { data: comparisonData, isLoading: isComparisonLoading } = useQuery<{ success: boolean; results: ModelResult[] }>({
+    queryKey: ['/api/predict/all', { horizon }],
+    queryFn: async () => {
+      const response = await apiRequest('POST', '/api/predict/all', { horizon });
+      return response.json();
+    },
+    // Only fetch if we have a latest result (implying data exists)
+    enabled: !!latestResult,
+  });
+
+  const isLoading = isLatestLoading || isComparisonLoading;
 
   if (isLoading) {
     return (
@@ -18,24 +37,24 @@ export default function Dashboard() {
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Energy load forecasting analytics and metrics</p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <MetricsLoadingSkeleton />
         </div>
-        
+
         <ChartLoadingSkeleton />
       </div>
     );
   }
 
-  if (error || !latestResult) {
+  if (!latestResult) {
     return (
       <div className="max-w-7xl mx-auto px-4 py-8 space-y-8">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Dashboard</h1>
           <p className="text-muted-foreground">Energy load forecasting analytics and metrics</p>
         </div>
-        
+
         <EmptyState
           icon={BarChart3}
           title="No Forecasts Available"
@@ -80,15 +99,33 @@ export default function Dashboard() {
         />
       </div>
 
+      {/* Latest Forecast Chart */}
       <ForecastChart
         data={forecast}
-        title={`${metadata.type.toUpperCase()} Forecast - ${metadata.horizon} Day${metadata.horizon > 1 ? 's' : ''}`}
+        title={`Latest Forecast (${metadata.type.toUpperCase()}) - ${metadata.horizon} Day${metadata.horizon > 1 ? 's' : ''}`}
         lastUpdated={metadata.trainedAt}
       />
 
+      {/* Model Comparison Section */}
+      {comparisonData?.results && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <h2 className="text-2xl font-bold">Model Comparison ({horizon} Day Horizon)</h2>
+            <div className="w-full sm:w-auto">
+              <HorizonSelector value={horizon} onChange={setHorizon} />
+            </div>
+          </div>
+          <ModelComparisonChart
+            results={comparisonData.results}
+            title={`All Models Comparison - ${horizon} Day${horizon > 1 ? 's' : ''}`}
+          />
+          <ModelMetricsTable results={comparisonData.results} />
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="p-6 bg-card rounded-lg border space-y-4">
-          <h3 className="text-lg font-semibold">Model Information</h3>
+          <h3 className="text-lg font-semibold">Latest Model Information</h3>
           <div className="space-y-3">
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground">Model Type</span>
@@ -110,7 +147,7 @@ export default function Dashboard() {
         </div>
 
         <div className="p-6 bg-card rounded-lg border space-y-4">
-          <h3 className="text-lg font-semibold">Performance Metrics</h3>
+          <h3 className="text-lg font-semibold">Latest Performance Metrics</h3>
           <div className="space-y-3">
             <div>
               <div className="flex justify-between items-center mb-2">
@@ -118,7 +155,7 @@ export default function Dashboard() {
                 <span className="text-sm font-medium font-mono">{metrics.mae.toFixed(2)} MW</span>
               </div>
               <div className="w-full bg-muted rounded-full h-2">
-                <div 
+                <div
                   className="bg-primary rounded-full h-2 transition-all duration-500"
                   style={{ width: `${Math.min((metrics.mae / 100) * 100, 100)}%` }}
                 />
@@ -130,7 +167,7 @@ export default function Dashboard() {
                 <span className="text-sm font-medium font-mono">{metrics.rmse.toFixed(2)} MW</span>
               </div>
               <div className="w-full bg-muted rounded-full h-2">
-                <div 
+                <div
                   className="bg-primary rounded-full h-2 transition-all duration-500"
                   style={{ width: `${Math.min((metrics.rmse / 150) * 100, 100)}%` }}
                 />
@@ -142,7 +179,7 @@ export default function Dashboard() {
                 <span className="text-sm font-medium font-mono">{metrics.mape.toFixed(2)}%</span>
               </div>
               <div className="w-full bg-muted rounded-full h-2">
-                <div 
+                <div
                   className="bg-primary rounded-full h-2 transition-all duration-500"
                   style={{ width: `${Math.min(metrics.mape, 100)}%` }}
                 />
